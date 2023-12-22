@@ -72,7 +72,7 @@ func findPackageName(metadata *constant.Metadata) (string, error) {
 }
 
 func init() {
-	if !features.CMFA {
+	if !features.Android {
 		process.DefaultPackageNameResolver = findPackageName
 	}
 }
