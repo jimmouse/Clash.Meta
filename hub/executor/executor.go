@@ -25,7 +25,6 @@ import (
 	"github.com/metacubex/mihomo/component/trie"
 	"github.com/metacubex/mihomo/config"
 	C "github.com/metacubex/mihomo/constant"
-	"github.com/metacubex/mihomo/constant/features"
 	"github.com/metacubex/mihomo/constant/provider"
 	"github.com/metacubex/mihomo/dns"
 	"github.com/metacubex/mihomo/listener"
@@ -180,9 +179,7 @@ func updateListeners(general *config.General, listeners map[string]C.InboundList
 	listener.ReCreateHTTP(general.Port, tunnel.Tunnel)
 	listener.ReCreateSocks(general.SocksPort, tunnel.Tunnel)
 	listener.ReCreateRedir(general.RedirPort, tunnel.Tunnel)
-	if !features.CMFA {
-		listener.ReCreateAutoRedir(general.EBpf.AutoRedir, tunnel.Tunnel)
-	}
+	listener.ReCreateAutoRedir(general.EBpf.AutoRedir, tunnel.Tunnel)
 	listener.ReCreateTProxy(general.TProxyPort, tunnel.Tunnel)
 	listener.ReCreateMixed(general.MixedPort, tunnel.Tunnel)
 	listener.ReCreateShadowSocks(general.ShadowSocksConfig, tunnel.Tunnel)
@@ -277,10 +274,9 @@ func updateRules(rules []C.Rule, subRules map[string][]C.Rule, ruleProviders map
 func loadProvider(pv provider.Provider) {
 	if pv.VehicleType() == provider.Compatible {
 		return
-	} else {
-		log.Infoln("Start initial provider %s", (pv).Name())
 	}
-
+	providerName := (pv).Name()
+	log.Infoln("Start initial provider %s", providerName)
 	if err := pv.Initial(); err != nil {
 		switch pv.Type() {
 		case provider.Proxy:
@@ -293,41 +289,31 @@ func loadProvider(pv provider.Provider) {
 			}
 
 		}
+	} else {
+		if DefaultProxyProviderLoadedHook != nil && pv.Type() == provider.Proxy {
+			DefaultProxyProviderLoadedHook(providerName)
+		}
 	}
 }
 
 func loadRuleProvider(ruleProviders map[string]provider.RuleProvider) {
-	wg := sync.WaitGroup{}
-	ch := make(chan struct{}, concurrentCount)
 	for _, ruleProvider := range ruleProviders {
 		ruleProvider := ruleProvider
-		wg.Add(1)
-		ch <- struct{}{}
 		go func() {
-			defer func() { <-ch; wg.Done() }()
 			loadProvider(ruleProvider)
 
 		}()
 	}
-
-	wg.Wait()
 }
 
 func loadProxyProvider(proxyProviders map[string]provider.ProxyProvider) {
-	// limit concurrent size
-	wg := sync.WaitGroup{}
-	ch := make(chan struct{}, concurrentCount)
+
 	for _, proxyProvider := range proxyProviders {
 		proxyProvider := proxyProvider
-		wg.Add(1)
-		ch <- struct{}{}
 		go func() {
-			defer func() { <-ch; wg.Done() }()
 			loadProvider(proxyProvider)
 		}()
 	}
-
-	wg.Wait()
 }
 func hcCompatibleProvider(proxyProviders map[string]provider.ProxyProvider) {
 	// limit concurrent size
