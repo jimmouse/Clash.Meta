@@ -1,7 +1,10 @@
 package hub
 
 import (
+	"strings"
+
 	"github.com/metacubex/mihomo/config"
+	"github.com/metacubex/mihomo/constant/features"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/hub/route"
 	"github.com/metacubex/mihomo/log"
@@ -40,6 +43,11 @@ func ApplyConfig(cfg *config.Config) {
 }
 
 func applyRoute(cfg *config.Config) {
+	if features.Android && strings.HasSuffix(cfg.Controller.ExternalUI, ":0") {
+		// CMFA have set its default override value to end with ":0" for security.
+		// so we direct return at here
+		return
+	}
 	if cfg.Controller.ExternalUI != "" {
 		route.SetUIPath(cfg.Controller.ExternalUI)
 	}
@@ -56,16 +64,8 @@ func applyRoute(cfg *config.Config) {
 }
 
 // Parse call at the beginning of mihomo
-func Parse(configBytes []byte, options ...Option) error {
-	var cfg *config.Config
-	var err error
-
-	if len(configBytes) != 0 {
-		cfg, err = executor.ParseWithBytes(configBytes)
-	} else {
-		cfg, err = executor.Parse()
-	}
-
+func Parse(options ...Option) error {
+	cfg, err := executor.Parse()
 	if err != nil {
 		return err
 	}
@@ -76,4 +76,9 @@ func Parse(configBytes []byte, options ...Option) error {
 
 	ApplyConfig(cfg)
 	return nil
+}
+
+func UltraApplyConfig(cfg *config.Config) {
+	route.ReStartServer(cfg.Controller.ExternalController)
+	executor.ApplyConfig(cfg, true)
 }
