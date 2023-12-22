@@ -1,4 +1,4 @@
-//go:build android && cmfa
+//go:build android
 
 package provider
 
@@ -10,6 +10,12 @@ var (
 
 type UpdatableProvider interface {
 	UpdatedAt() time.Time
+}
+
+func (rp *ruleSetProvider) Close() error {
+	rp.Fetcher.Destroy()
+
+	return nil
 }
 
 func Suspend(s bool) {
