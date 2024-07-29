@@ -124,7 +124,7 @@ func ReStartServer(addr string) {
 	StopServer()
 	server = &http.Server{
 		Addr:    addr,
-		Handler: router(false, false),
+		Handler: router(false, false, ""),
 	}
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
