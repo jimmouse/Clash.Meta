@@ -332,7 +332,7 @@ type RawConfig struct {
 	FindProcessMode         P.FindProcessMode `yaml:"find-process-mode" json:"find-process-mode"`
 	GlobalClientFingerprint string            `yaml:"global-client-fingerprint"`
 	GlobalUA                string            `yaml:"global-ua" json:"global-ua"`
-	KeepAliveInterval       int               `yaml:"keep-alive-interval"`
+	KeepAliveInterval       int               `yaml:"keep-alive-interval" json:"keep-alive-interval"`
 
 	Sniffer       RawSniffer                `yaml:"sniffer" json:"sniffer"`
 	ProxyProvider map[string]map[string]any `yaml:"proxy-providers"`
@@ -642,7 +642,6 @@ func parseGeneral(cfg *RawConfig) (*General, error) {
 	C.MmdbUrl = cfg.GeoXUrl.Mmdb
 	C.ASNUrl = cfg.GeoXUrl.ASN
 
-	fmt.Printf("MmdbUrl ====> %v\n", C.MmdbUrl)
 	C.GeodataMode = cfg.GeodataMode
 	C.UA = cfg.GlobalUA
 	if cfg.KeepAliveInterval != 0 {
