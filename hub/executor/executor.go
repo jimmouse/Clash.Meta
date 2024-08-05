@@ -290,8 +290,8 @@ func loadProvider(pv provider.Provider) {
 
 		}
 	} else {
-		if DefaultProxyProviderLoadedHook != nil && pv.Type() == provider.Proxy {
-			DefaultProxyProviderLoadedHook(providerName)
+		if DefaultProviderLoadedHook != nil {
+			DefaultProviderLoadedHook(providerName)
 		}
 	}
 }
@@ -301,13 +301,11 @@ func loadRuleProvider(ruleProviders map[string]provider.RuleProvider) {
 		ruleProvider := ruleProvider
 		go func() {
 			loadProvider(ruleProvider)
-
 		}()
 	}
 }
 
 func loadProxyProvider(proxyProviders map[string]provider.ProxyProvider) {
-
 	for _, proxyProvider := range proxyProviders {
 		proxyProvider := proxyProvider
 		go func() {

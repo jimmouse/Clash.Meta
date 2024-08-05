@@ -1,5 +1,5 @@
 package executor
 
-type ProxyProviderLoadedHook func(providerName string)
+type ProviderLoadedHook func(providerName string)
 
-var DefaultProxyProviderLoadedHook ProxyProviderLoadedHook
+var DefaultProviderLoadedHook ProviderLoadedHook
