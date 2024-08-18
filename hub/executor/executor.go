@@ -109,7 +109,6 @@ func ApplyConfig(cfg *config.Config, force bool) {
 	loadRuleProvider(cfg.RuleProviders)
 	runtime.GC()
 	tunnel.OnRunning()
-	hcCompatibleProvider(cfg.Providers)
 	log.SetLevel(cfg.General.LogLevel)
 }
 
