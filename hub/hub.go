@@ -62,7 +62,7 @@ func Parse(options ...Option) error {
 	return nil
 }
 
-func UltraApplyConfig(cfg *config.Config, force bool) {
+func UltraApplyConfig(cfg *config.Config) {
 	route.ReStartServer(cfg.General.ExternalController)
 	executor.ApplyConfig(cfg, true)
 }

@@ -97,9 +97,7 @@ func ApplyConfig(cfg *config.Config, force bool) {
 	updateGeneral(cfg.General)
 	updateNTP(cfg.NTP)
 	updateDNS(cfg.DNS, cfg.General.IPv6)
-	updateListeners(cfg.General, cfg.Listeners, force)
 	updateIPTables(cfg)
-	updateTun(cfg.General)
 	updateExperimental(cfg)
 	updateTunnels(cfg.Tunnels)
 
@@ -111,7 +109,6 @@ func ApplyConfig(cfg *config.Config, force bool) {
 	loadRuleProvider(cfg.RuleProviders)
 	runtime.GC()
 	tunnel.OnRunning()
-	hcCompatibleProvider(cfg.Providers)
 
 	log.SetLevel(cfg.General.LogLevel)
 }
@@ -334,6 +331,7 @@ func hcCompatibleProvider(proxyProviders map[string]provider.ProxyProvider) {
 	}
 
 }
+
 func updateTun(general *config.General) {
 	if general == nil {
 		return
