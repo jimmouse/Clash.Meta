@@ -13,7 +13,10 @@ func StopListener() {
 		_ = socksListener.Close()
 		socksListener = nil
 	}
-
+	if socksUDPListener != nil {
+		_ = socksUDPListener.Close()
+		socksUDPListener = nil
+	}
 	if autoRedirListener != nil {
 		_ = autoRedirListener.Close()
 		autoRedirListener = nil
@@ -34,11 +37,10 @@ func StopListener() {
 		mixedListener = nil
 	}
 
-	if mixedListener != nil {
-		_ = mixedListener.Close()
-		mixedListener = nil
+	if mixedUDPLister != nil {
+		_ = mixedUDPLister.Close()
+		mixedUDPLister = nil
 	}
-
 	if shadowSocksListener != nil {
 		_ = shadowSocksListener.Close()
 		shadowSocksListener = nil
