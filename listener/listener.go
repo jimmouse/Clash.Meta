@@ -518,7 +518,7 @@ func ReCreateTun(tunConf LC.Tun, tunnel C.Tunnel) {
 		}
 	}()
 
-	if !hasTunConfigChange(&tunConf) {
+	if tunLister != nil && !hasTunConfigChange(&tunConf) {
 		if tunLister != nil {
 			tunLister.FlushDefaultInterface()
 		}
