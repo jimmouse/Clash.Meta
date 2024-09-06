@@ -52,10 +52,6 @@ func StopListener() {
 		tunLister = nil
 	}
 
-	if autoRedirListener != nil {
-		_ = autoRedirListener.Close()
-		autoRedirListener = nil
-	}
 	if shadowSocksListener != nil {
 		_ = shadowSocksListener.Close()
 		shadowSocksListener = nil

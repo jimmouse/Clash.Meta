@@ -29,6 +29,7 @@ import (
 	"github.com/metacubex/mihomo/component/trie"
 	"github.com/metacubex/mihomo/component/updater"
 	C "github.com/metacubex/mihomo/constant"
+	"github.com/metacubex/mihomo/constant/features"
 	providerTypes "github.com/metacubex/mihomo/constant/provider"
 	snifferTypes "github.com/metacubex/mihomo/constant/sniffer"
 	"github.com/metacubex/mihomo/dns"
@@ -149,7 +150,7 @@ type DNS struct {
 	CacheAlgorithm        string
 	FakeIPRange           *fakeip.Pool
 	Hosts                 *trie.DomainTrie[resolver.HostValue]
-	NameServerPolicy      *orderedmap.OrderedMap[string, []dns.NameServer]
+	NameServerPolicy      []dns.Policy
 	ProxyServerNameserver []dns.NameServer
 }
 
@@ -693,30 +694,30 @@ func parseGeneral(cfg *RawConfig) (*General, error) {
 	C.ASNUrl = cfg.GeoXUrl.ASN
 	C.GeodataMode = cfg.GeodataMode
 	C.UA = cfg.GlobalUA
+
+	if cfg.KeepAliveIdle != 0 {
+		N.KeepAliveIdle = time.Duration(cfg.KeepAliveIdle) * time.Second
+	}
 	if cfg.KeepAliveInterval != 0 {
 		N.KeepAliveInterval = time.Duration(cfg.KeepAliveInterval) * time.Second
 	}
+	N.DisableKeepAlive = cfg.DisableKeepAlive
 
-	updater.ExternalUIPath = cfg.ExternalUI
 	// checkout externalUI exist
-	if updater.ExternalUIPath != "" {
-		updater.ExternalUIPath = C.Path.Resolve(updater.ExternalUIPath)
-		if _, err := os.Stat(updater.ExternalUIPath); os.IsNotExist(err) {
-			defaultUIpath := path.Join(C.Path.HomeDir(), "ui")
-			log.Warnln("external-ui: %s does not exist, creating folder in %s", updater.ExternalUIPath, defaultUIpath)
-			if err := os.MkdirAll(defaultUIpath, os.ModePerm); err != nil {
-				return nil, err
-			}
-			updater.ExternalUIPath = defaultUIpath
-			cfg.ExternalUI = defaultUIpath
-		}
+	if cfg.ExternalUI != "" {
+		updater.AutoUpdateUI = true
+		updater.ExternalUIPath = C.Path.Resolve(cfg.ExternalUI)
+	} else {
+		// default externalUI path
+		updater.ExternalUIPath = path.Join(C.Path.HomeDir(), "ui")
 	}
+
 	// checkout UIpath/name exist
 	if cfg.ExternalUIName != "" {
-		updater.ExternalUIName = cfg.ExternalUIName
-	} else {
-		updater.ExternalUIFolder = updater.ExternalUIPath
+		updater.AutoUpdateUI = true
+		updater.ExternalUIPath = path.Join(updater.ExternalUIPath, cfg.ExternalUIName)
 	}
+
 	if cfg.ExternalUIURL != "" {
 		updater.ExternalUIURL = cfg.ExternalUIURL
 	}
@@ -738,30 +739,81 @@ func parseGeneral(cfg *RawConfig) (*General, error) {
 			InboundTfo:        cfg.InboundTfo,
 			InboundMPTCP:      cfg.InboundMPTCP,
 		},
-		Controller: Controller{
-			ExternalController:     cfg.ExternalController,
-			ExternalUI:             cfg.ExternalUI,
-			Secret:                 cfg.Secret,
-			ExternalControllerUnix: cfg.ExternalControllerUnix,
-			ExternalControllerTLS:  cfg.ExternalControllerTLS,
-			ExternalDohServer:      cfg.ExternalDohServer,
+		UnifiedDelay: cfg.UnifiedDelay,
+		Mode:         cfg.Mode,
+		LogLevel:     cfg.LogLevel,
+		IPv6:         cfg.IPv6,
+		Interface:    cfg.Interface,
+		RoutingMark:  cfg.RoutingMark,
+		GeoXUrl: GeoXUrl{
+			GeoIp:   cfg.GeoXUrl.GeoIp,
+			Mmdb:    cfg.GeoXUrl.Mmdb,
+			ASN:     cfg.GeoXUrl.ASN,
+			GeoSite: cfg.GeoXUrl.GeoSite,
 		},
-		UnifiedDelay:            cfg.UnifiedDelay,
-		Mode:                    cfg.Mode,
-		LogLevel:                cfg.LogLevel,
-		IPv6:                    cfg.IPv6,
-		Interface:               cfg.Interface,
-		RoutingMark:             cfg.RoutingMark,
-		GeoXUrl:                 cfg.GeoXUrl,
 		GeoAutoUpdate:           cfg.GeoAutoUpdate,
 		GeoUpdateInterval:       cfg.GeoUpdateInterval,
 		GeodataMode:             cfg.GeodataMode,
 		GeodataLoader:           cfg.GeodataLoader,
 		TCPConcurrent:           cfg.TCPConcurrent,
 		FindProcessMode:         cfg.FindProcessMode,
-		EBpf:                    cfg.EBpf,
 		GlobalClientFingerprint: cfg.GlobalClientFingerprint,
 		GlobalUA:                cfg.GlobalUA,
+	}, nil
+}
+
+func parseController(cfg *RawConfig) (*Controller, error) {
+	return &Controller{
+		ExternalController:     cfg.ExternalController,
+		ExternalUI:             cfg.ExternalUI,
+		Secret:                 cfg.Secret,
+		ExternalControllerUnix: cfg.ExternalControllerUnix,
+		ExternalControllerTLS:  cfg.ExternalControllerTLS,
+		ExternalDohServer:      cfg.ExternalDohServer,
+	}, nil
+}
+
+func parseExperimental(cfg *RawConfig) (*Experimental, error) {
+	return &Experimental{
+		Fingerprints:     cfg.Experimental.Fingerprints,
+		QUICGoDisableGSO: cfg.Experimental.QUICGoDisableGSO,
+		QUICGoDisableECN: cfg.Experimental.QUICGoDisableECN,
+		IP4PEnable:       cfg.Experimental.IP4PEnable,
+	}, nil
+}
+
+func parseIPTables(cfg *RawConfig) (*IPTables, error) {
+	return &IPTables{
+		Enable:           cfg.IPTables.Enable,
+		InboundInterface: cfg.IPTables.InboundInterface,
+		Bypass:           cfg.IPTables.Bypass,
+		DnsRedirect:      cfg.IPTables.DnsRedirect,
+	}, nil
+}
+
+func parseNTP(cfg *RawConfig) (*NTP, error) {
+	return &NTP{
+		Enable:        cfg.NTP.Enable,
+		Server:        cfg.NTP.Server,
+		Port:          cfg.NTP.Port,
+		Interval:      cfg.NTP.Interval,
+		DialerProxy:   cfg.NTP.DialerProxy,
+		WriteToSystem: cfg.NTP.WriteToSystem,
+	}, nil
+}
+
+func parseProfile(cfg *RawConfig) (*Profile, error) {
+	return &Profile{
+		StoreSelected: cfg.Profile.StoreSelected,
+		StoreFakeIP:   cfg.Profile.StoreFakeIP,
+	}, nil
+}
+
+func parseTLS(cfg *RawConfig) (*TLS, error) {
+	return &TLS{
+		Certificate:     cfg.TLS.Certificate,
+		PrivateKey:      cfg.TLS.PrivateKey,
+		CustomTrustCert: cfg.TLS.CustomTrustCert,
 	}, nil
 }
 

@@ -36,7 +36,7 @@ var (
 	httpServer *http.Server
 	tlsServer  *http.Server
 	unixServer *http.Server
-	server *http.Server
+	server     *http.Server
 )
 
 type Traffic struct {
@@ -142,7 +142,7 @@ func ReStartServer(addr string) {
 	StopServer()
 	server = &http.Server{
 		Addr:    addr,
-		Handler: router(false, false, ""),
+		Handler: router(false, "", ""),
 	}
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
@@ -244,14 +244,14 @@ func startUnix(cfg *Config) {
 			}
 		}
 
-	// https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/
-	//
-	// Note: As mentioned above in the ‘security’ section, when a socket binds a socket to a valid pathname address,
-	// a socket file is created within the filesystem. On Linux, the application is expected to unlink
-	// (see the notes section in the man page for AF_UNIX) before any other socket can be bound to the same address.
-	// The same applies to Windows unix sockets, except that, DeleteFile (or any other file delete API)
-	// should be used to delete the socket file prior to calling bind with the same path.
-	_ = syscall.Unlink(addr)
+		// https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/
+		//
+		// Note: As mentioned above in the ‘security’ section, when a socket binds a socket to a valid pathname address,
+		// a socket file is created within the filesystem. On Linux, the application is expected to unlink
+		// (see the notes section in the man page for AF_UNIX) before any other socket can be bound to the same address.
+		// The same applies to Windows unix sockets, except that, DeleteFile (or any other file delete API)
+		// should be used to delete the socket file prior to calling bind with the same path.
+		_ = syscall.Unlink(addr)
 
 		l, err := inbound.Listen("unix", addr)
 		if err != nil {
