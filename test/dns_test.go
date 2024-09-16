@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -14,7 +13,6 @@ func exchange(address, domain string, tp uint16) ([]dns.RR, error) {
 	client := dns.Client{}
 	query := &dns.Msg{}
 	query.SetQuestion(dns.Fqdn(domain), tp)
-	fmt.Println("aa")
 	r, _, err := client.Exchange(query, address)
 	if err != nil {
 		return nil, err
